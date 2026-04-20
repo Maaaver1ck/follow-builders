@@ -22,8 +22,10 @@ jobs:
       - name: Install dependencies
         run: cd scripts && npm install
 
-      - name: Setup config
+      - name: Setup skill and config
         run: |
+          mkdir -p ~/.claude/skills
+          cp -r . ~/.claude/skills/follow-builders
           mkdir -p ~/.follow-builders
           echo '{"platform":"other","language":"zh","timezone":"Asia/Shanghai","frequency":"daily","deliveryTime":"09:00","delivery":{"method":"stdout"},"onboardingComplete":true}' > ~/.follow-builders/config.json
 
