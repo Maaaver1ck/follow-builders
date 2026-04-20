@@ -1,0 +1,58 @@
+name: Daily AI Builders Digest
+
+on:
+  schedule:
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+
+jobs:
+  send-digest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Install dependencies
+        run: cd scripts && npm install
+
+      - name: Setup config
+        env:
+          TO_EMAIL: ${{ secrets.TO_EMAIL }}
+        run: |
+          mkdir -p ~/.follow-builders
+          cat > ~/.follow-builders/config.json << CFGEOF
+{
+  "platform": "other",
+  "language": "zh",
+  "timezone": "Asia/Shanghai",
+  "frequency": "daily",
+  "deliveryTime": "09:00",
+  "delivery": {
+    "method": "stdout",
+    "email": "${TO_EMAIL}"
+  },
+  "onboardingComplete": true
+}
+CFGEOF
+
+      - name: Generate digest
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_MODEL: claude-haiku-4-5-20251001
+        run: |
+          claude --dangerously-skip-permissions --print "请运行 follow-builders skill，生成今日 AI builders 摘要，用中文输出，只输出摘要内容本身，不要其他说明文字" > /tmp/fb-digest.txt
+          echo "=== Digest preview ==="
+          head -20 /tmp/fb-digest.txt
+
+      - name: Send email
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          TO_EMAIL: ${{ secrets.TO_EMAIL }}
+        run: node scripts/send-email.js
