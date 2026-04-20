@@ -23,24 +23,9 @@ jobs:
         run: cd scripts && npm install
 
       - name: Setup config
-        env:
-          TO_EMAIL: ${{ secrets.TO_EMAIL }}
         run: |
           mkdir -p ~/.follow-builders
-          cat > ~/.follow-builders/config.json << CFGEOF
-{
-  "platform": "other",
-  "language": "zh",
-  "timezone": "Asia/Shanghai",
-  "frequency": "daily",
-  "deliveryTime": "09:00",
-  "delivery": {
-    "method": "stdout",
-    "email": "${TO_EMAIL}"
-  },
-  "onboardingComplete": true
-}
-CFGEOF
+          echo '{"platform":"other","language":"zh","timezone":"Asia/Shanghai","frequency":"daily","deliveryTime":"09:00","delivery":{"method":"stdout"},"onboardingComplete":true}' > ~/.follow-builders/config.json
 
       - name: Generate digest
         env:
@@ -48,7 +33,6 @@ CFGEOF
           ANTHROPIC_MODEL: claude-haiku-4-5-20251001
         run: |
           claude --dangerously-skip-permissions --print "请运行 follow-builders skill，生成今日 AI builders 摘要，用中文输出，只输出摘要内容本身，不要其他说明文字" > /tmp/fb-digest.txt
-          echo "=== Digest preview ==="
           head -20 /tmp/fb-digest.txt
 
       - name: Send email
